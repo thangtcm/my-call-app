@@ -15,8 +15,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const apiKey = process.env.STRINGEE_API_KEY as string;
   const secretKey = process.env.STRINGEE_SECRET_KEY as string;
-  console.log(apiKey)
-  console.log(secretKey)
+  if (!apiKey || !secretKey) {
+    return NextResponse.json(
+      { error: 'Server configuration error: Missing STRINGEE_API_KEY or STRINGEE_SECRET_KEY' },
+      { status: 500 }
+    );
+  }
   const payload = {
     jti: apiKey + '-' + Date.now(),
     iss: apiKey,
