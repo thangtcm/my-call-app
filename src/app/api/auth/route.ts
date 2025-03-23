@@ -15,7 +15,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const apiKey = process.env.STRINGEE_API_KEY as string;
   const secretKey = process.env.STRINGEE_SECRET_KEY as string;
-
+  console.log(apiKey)
+  console.log(secretKey)
   const payload = {
     jti: apiKey + '-' + Date.now(),
     iss: apiKey,
