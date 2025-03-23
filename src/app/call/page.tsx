@@ -76,15 +76,15 @@ export default function CallPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fromUserId: userId, toUserId, text }),
         });
-        const { audioUrl } = await res.json();
+        const { audio } = await res.json();
 
         const call = getStringeeCall(client, userId, toUserId, false);
         call.makeCall((res: { r: number; message: string }) => {
             console.log('makeCall response:', res);
             if (res.r === 0) {
                 setCallStatus('Calling ' + toUserId);
-                const audio = new Audio(audioUrl);
-                audio.play(); // Phát audio khi cuộc gọi bắt đầu
+                const audioElement = new Audio(audio); // Phát trực tiếp từ Base64
+                audioElement.play();
             } else {
                 setCallStatus('Call failed: ' + res.message);
             }

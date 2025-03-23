@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ElevenLabsClient } from 'elevenlabs';
-import fs from 'fs';
-import path from 'path';
+import { Readable } from 'stream';
 
 interface WebhookRequestBody {
   fromUserId: string;
@@ -28,23 +27,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       model_id: 'eleven_monolingual_v1',
     });
 
-    const audioFileName = `audio-${Date.now()}.mp3`;
-    const audioFilePath = path.join(process.cwd(), 'public', 'temp', audioFileName);
+    // Chuyển Readable stream thành Buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of audioResponse as Readable) {
+      chunks.push(chunk);
+    }
+    const audioBuffer = Buffer.concat(chunks);
 
-    const writer = fs.createWriteStream(audioFilePath);
-    audioResponse.pipe(writer);
+    // Trả về Buffer dưới dạng Base64
+    const audioBase64 = audioBuffer.toString('base64');
 
-    await new Promise<void>((resolve, reject) => {
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
-
-    const host = request.headers.get('host') || '';
-    const audioUrl = `${host.includes('localhost') ? 'http://localhost:3000' : 'https://' + host}/temp/${audioFileName}`;
-
-    // Không dùng WebSocket nữa, chỉ trả về thông tin
     return NextResponse.json(
-      { message: `Call can be triggered from ${fromUserId} to ${toUserId}`, audioUrl },
+      {
+        message: `Call can be triggered from ${fromUserId} to ${toUserId}`,
+        audio: `data:audio/mpeg;base64,${audioBase64}`, // Data URL
+      },
       { status: 200 }
     );
   } catch (error: any) {
