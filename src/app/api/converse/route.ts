@@ -27,6 +27,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json([{ action: "talk", text: "Có lỗi xảy ra." }]);
     }
 
+    if (!userSpeech) {
+        await sendToDiscord("⚠️ Không nhận được giọng nói", { callId, rawData: body });
+
+        return NextResponse.json([
+            {
+                action: "talk",
+                text: "Xin lỗi, tôi không nghe rõ. Bạn có thể nói lại không?",
+                voice: "hn_female_thutrang_phrase_48k-hsmm",
+            },
+            {
+                action: "input",
+                eventUrl: "https://my-call-app.vercel.app/api/converse",
+                type: ["speech"],
+                speech: {
+                    endOnSilence: 1.5,
+                    language: "vi-VN",
+                },
+            },
+        ]);
+    }
     await sendToDiscord("🗣️ Khách hàng nói:", { callId, text: userSpeech });
 
     // Giới hạn số lần hội thoại để tránh vòng lặp
