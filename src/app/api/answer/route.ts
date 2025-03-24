@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DISCORD_WEBHOOK_URL =
-  "https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0";
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/xxx/xxx";
 
 async function sendToDiscord(message: string, data: any = {}) {
   try {
@@ -12,7 +11,9 @@ async function sendToDiscord(message: string, data: any = {}) {
         content: `${message}\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
       }),
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error("Failed to send Discord log:", error);
+  }
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -25,22 +26,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Thiếu thông tin cuộc gọi" }, { status: 400 });
   }
 
-  await sendToDiscord("Cuộc gọi mới:", { from, to, uuid });
+  await sendToDiscord("📞 Cuộc gọi đến tổng đài", { from, to, uuid });
 
   const scco = [
     {
       action: "talk",
-      text: `Xin chào ${from}, tôi là trợ lý AI. Bạn cần hỗ trợ gì hôm nay?`,
+      text: `Xin chào, tôi là trợ lý AI. Bạn cần hỗ trợ gì hôm nay?`,
       voice: "hn_female_thutrang_phrase_48k-hsmm",
       bargeIn: true,
     },
     {
-      action: "record",
-      eventUrl: ["https://my-call-app.vercel.app/api/converse"],
-      format: "mp3",
-      enable: true,
-      mode: "voice",
-      stopAfterSilence: 2,
+      action: "input",
+      eventUrl: "https://my-call-app.vercel.app/api/converse",
+      type: ["speech"],
+      speech: {
+        endOnSilence: 1.5,
+        language: "vi-VN",
+      },
     },
   ];
 
