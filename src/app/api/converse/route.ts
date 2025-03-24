@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AssemblyAI } from 'assemblyai';
+
+const assemblyAIClient = new AssemblyAI({
+  apiKey: process.env.ASSEMBLYAI_API_KEY as string,
+});
 
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0';
 
@@ -18,10 +23,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
   await sendToDiscord('Request body received:', body);
 
-  const dtmf = body.dtmf; // Phím khách hàng nhấn
+  const recordingUrl = body.recordingUrl;
   const from = body.from || 'Unknown';
   const callId = body.call_id;
-  const timeout = body.timeout;
 
   if (!callId) {
     await sendToDiscord('Missing callId:', body);
@@ -34,71 +38,72 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ]);
   }
 
-  let scco = [];
-  if (timeout) {
-    await sendToDiscord('Timeout occurred:', { callId });
-    scco = [
-      {
-        action: 'talk',
-        text: 'Bạn chưa chọn gì. Nhấn 1 để kiểm tra đơn hàng, nhấn 2 để gặp nhân viên, sau đó nhấn phím thăng.',
-        voice: 'hn_female_thutrang_phrase_48k-hsmm',
-        bargeIn: true,
-      },
-      {
-        action: 'input',
-        eventUrl: 'https://my-call-app.vercel.app/api/converse',
-        mode: 'dtmf',
-        submitOnHash: true,
-        timeout: 15,
-        maxLength: 2,
-      },
-    ];
-  } else if (dtmf === '1') {
-    await sendToDiscord('Customer chose 1:', { callId });
-    scco = [
-      {
-        action: 'talk',
-        text: 'Đơn hàng của bạn đang được giao. Cảm ơn bạn đã sử dụng dịch vụ!',
-        voice: 'hn_female_thutrang_phrase_48k-hsmm',
-        bargeIn: true,
-      },
-    ];
-  } else if (dtmf === '2') {
-    await sendToDiscord('Customer chose 2:', { callId });
-    scco = [
-      {
-        action: 'connect',
-        from: {
-          type: 'external',
-          number: from,
-          alias: from,
+  try {
+    let customerText = 'Tôi không nghe rõ';
+    if (recordingUrl) {
+      await sendToDiscord('Transcribing recording:', { recordingUrl });
+      const transcript = await assemblyAIClient.transcripts.transcribe({ audio: recordingUrl });
+      customerText = transcript.text || 'Tôi không nghe rõ';
+      await sendToDiscord('Customer said:', { text: customerText });
+    } else {
+      await sendToDiscord('No recordingUrl provided:', { callId });
+      return NextResponse.json([
+        {
+          action: 'talk',
+          text: 'Bạn chưa nói gì. Vui lòng nói yêu cầu của bạn.',
+          voice: 'hn_female_thutrang_phrase_48k-hsmm',
+          bargeIn: true,
         },
-        to: {
-          type: 'internal',
-          number: 'agent_001', // Thay bằng userId agent thực tế
-          alias: 'Agent 001',
+        {
+          action: 'record',
+          eventUrl: 'https://my-call-app.vercel.app/api/converse',
+          format: 'mp3',
+          enable: true,
+          stopAfterSilence: 2,
         },
-      },
-    ];
-  } else {
-    await sendToDiscord('Invalid DTMF:', { dtmf, callId });
-    scco = [
-      {
-        action: 'talk',
-        text: 'Lựa chọn không hợp lệ. Nhấn 1 để kiểm tra đơn hàng, nhấn 2 để gặp nhân viên, sau đó nhấn phím thăng.',
-        voice: 'hn_female_thutrang_phrase_48k-hsmm',
-        bargeIn: true,
-      },
-      {
-        action: 'input',
-        eventUrl: 'https://my-call-app.vercel.app/api/converse',
-        mode: 'dtmf',
-        submitOnHash: true,
-        timeout: 15,
-        maxLength: 2,
-      },
-    ];
-  }
+      ]);
+    }
 
-  return NextResponse.json(scco);
+    // AI trò chuyện
+    let aiResponse = '';
+    if (customerText.toLowerCase().includes('đơn hàng')) {
+      aiResponse = 'Đơn hàng của bạn đang được giao. Bạn có muốn biết thêm chi tiết không?';
+    } else if (customerText.toLowerCase().includes('nhân viên')) {
+      aiResponse = 'Tôi sẽ chuyển bạn tới nhân viên. Vui lòng đợi trong giây lát.';
+    } else {
+      aiResponse = 'Tôi chưa hiểu rõ. Bạn có thể nói lại không?';
+    }
+    await sendToDiscord('AI response:', { response: aiResponse });
+
+    const scco = [
+      {
+        action: 'talk',
+        text: aiResponse,
+        voice: 'hn_female_thutrang_phrase_48k-hsmm',
+        bargeIn: true,
+      },
+      {
+        action: 'record',
+        eventUrl: 'https://my-call-app.vercel.app/api/converse',
+        format: 'mp3',
+        enable: true,
+        stopAfterSilence: 2,
+      },
+    ];
+
+    return NextResponse.json(scco);
+  } catch (error: any) {
+    await sendToDiscord('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      recordingUrl,
+    });
+    return NextResponse.json([
+      {
+        action: 'talk',
+        text: 'Có lỗi xảy ra. Vui lòng thử lại.',
+        voice: 'hn_female_thutrang_phrase_48k-hsmm',
+      },
+    ]);
+  }
 }

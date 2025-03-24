@@ -20,6 +20,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const to = searchParams.get('to');
   const uuid = searchParams.get('uuid');
 
+  if (!from && !to && !uuid) {
+    return NextResponse.json({ error: 'Invalid request, missing all parameters' }, { status: 400 });
+  }
+
   await sendToDiscord('Answer URL called:', { from, to, uuid });
 
   if (!from || !to || !uuid) {
@@ -30,17 +34,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const scco = [
     {
       action: 'talk',
-      text: `Xin chào ${from}, tôi là trợ lý AI. Nhấn 1 để kiểm tra đơn hàng, nhấn 2 để gặp nhân viên, sau đó nhấn phím thăng để xác nhận.`,
+      text: `Xin chào ${from}, tôi là trợ lý AI. Bạn cần hỗ trợ gì hôm nay?`,
       voice: 'hn_female_thutrang_phrase_48k-hsmm',
       bargeIn: true,
     },
     {
-      action: 'input',
+      action: 'record',
       eventUrl: 'https://my-call-app.vercel.app/api/converse',
-      mode: 'dtmf', // Chuyển sang DTMF
-      submitOnHash: true, // Gửi khi nhấn '#'
-      timeout: 15, // Đợi 15 giây
-      maxLength: 2,
+      format: 'mp3',
+      enable: true,
+      stopAfterSilence: 2, // Dừng ghi âm sau 2 giây im lặng
     },
   ];
 
