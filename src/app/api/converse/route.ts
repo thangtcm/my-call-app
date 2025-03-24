@@ -5,30 +5,56 @@ const assemblyAIClient = new AssemblyAI({
   apiKey: process.env.ASSEMBLYAI_API_KEY as string,
 });
 
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0';
+
+// Hàm gửi log tới Discord
+async function sendToDiscord(message: string, data: any = {}) {
+  try {
+    await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `${message}\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
+      }),
+    });
+  } catch (error) {
+    // Không làm gì nếu gửi Discord thất bại để không ảnh hưởng luồng chính
+  }
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
-  const audioUrl = body.audioUrl; // Đoạn giọng nói của khách hàng từ Stringee
+  await sendToDiscord('Request body received:', body);
+
+  const audioUrl = body.audioUrl;
   const from = body.from;
   const callId = body.call_id;
 
+  if (!audioUrl || !from || !callId) {
+    await sendToDiscord('Missing required fields:', { audioUrl, from, callId });
+    return NextResponse.json([
+      {
+        action: 'talk',
+        text: 'Có lỗi xảy ra. Vui lòng thử lại.',
+        voice: 'hn_female_thutrang_phrase_48k-hsmm',
+      },
+    ]);
+  }
+
   try {
-    // 1. Speech-to-Text
+    await sendToDiscord('Transcribing audio:', { audioUrl });
     const transcript = await assemblyAIClient.transcripts.transcribe({ audio: audioUrl });
     const customerText = transcript.text || 'Tôi không nghe rõ';
-    console.log('Customer said:', customerText);
+    await sendToDiscord('Customer said:', { text: customerText });
 
-    // 2. AI tư vấn (giả lập)
     let aiResponse = '';
     if (customerText.toLowerCase().includes('đơn hàng')) {
       aiResponse = 'Đơn hàng của bạn đang được giao. Bạn có muốn biết thêm chi tiết không?';
-    } else if (customerText.toLowerCase().includes('hỗ trợ')) {
-      aiResponse = 'Tôi có thể giúp bạn với các vấn đề kỹ thuật hoặc chuyển bạn tới nhân viên. Bạn muốn gì?';
     } else {
       aiResponse = 'Tôi chưa hiểu rõ. Bạn có thể nói lại không?';
     }
-    console.log('AI response:', aiResponse);
+    await sendToDiscord('AI response:', { response: aiResponse });
 
-    // 3. Dùng TTS của Stringee để test (vì không lưu ElevenLabs audio)
     const scco = [
       {
         action: 'talk',
@@ -46,14 +72,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(scco);
   } catch (error: any) {
-    console.error('Error:', error.message);
-    const scco = [
+    await sendToDiscord('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      audioUrl,
+    });
+    return NextResponse.json([
       {
         action: 'talk',
         text: 'Có lỗi xảy ra. Vui lòng thử lại.',
         voice: 'hn_female_thutrang_phrase_48k-hsmm',
       },
-    ];
-    return NextResponse.json(scco);
+    ]);
   }
 }
