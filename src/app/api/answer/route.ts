@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0';
+const DISCORD_WEBHOOK_URL =
+  "https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0";
 
 async function sendToDiscord(message: string, data: any = {}) {
   try {
     await fetch(DISCORD_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         content: `${message}\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
       }),
@@ -16,37 +17,32 @@ async function sendToDiscord(message: string, data: any = {}) {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const from = searchParams.get('from');
-  const to = searchParams.get('to');
-  const uuid = searchParams.get('uuid');
-
-  if (!from && !to && !uuid) {
-    return NextResponse.json({ error: 'Invalid request, missing all parameters' }, { status: 400 });
-  }
-
-  await sendToDiscord('Answer URL called:', { from, to, uuid });
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+  const uuid = searchParams.get("uuid");
 
   if (!from || !to || !uuid) {
-    await sendToDiscord('Missing parameters in Answer URL:', { from, to, uuid });
-    return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    return NextResponse.json({ error: "Thiếu thông tin cuộc gọi" }, { status: 400 });
   }
+
+  await sendToDiscord("Cuộc gọi mới:", { from, to, uuid });
 
   const scco = [
     {
-      action: 'talk',
+      action: "talk",
       text: `Xin chào ${from}, tôi là trợ lý AI. Bạn cần hỗ trợ gì hôm nay?`,
-      voice: 'hn_female_thutrang_phrase_48k-hsmm',
+      voice: "hn_female_thutrang_phrase_48k-hsmm",
       bargeIn: true,
     },
     {
-      action: 'record',
+      action: "record",
       eventUrl: ["https://my-call-app.vercel.app/api/converse"],
-      format: 'mp3',
+      format: "mp3",
       enable: true,
-      stopAfterSilence: 2, // Dừng ghi âm sau 2 giây im lặng
+      mode: "voice",
+      stopAfterSilence: 2,
     },
   ];
 
-  await sendToDiscord('SCCO sent from Answer:', scco);
   return NextResponse.json(scco);
 }
