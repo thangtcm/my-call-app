@@ -87,7 +87,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         eventUrl: 'https://my-call-app.vercel.app/api/converse',
         format: 'mp3',
         enable: true,
-        stopAfterSilence: 2,
+        duration: 5,
       },
     ];
 

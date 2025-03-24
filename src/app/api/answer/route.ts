@@ -40,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     {
       action: 'record',
-      eventUrl: 'https://my-call-app.vercel.app/api/converse',
+      eventUrl: ["https://my-call-app.vercel.app/api/converse"],
       format: 'mp3',
       enable: true,
       stopAfterSilence: 2, // Dừng ghi âm sau 2 giây im lặng
