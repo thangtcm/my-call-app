@@ -19,16 +19,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     {
       action: 'record',
-      eventUrl: 'https://my-call-app.vercel.app/api/converse', // Chuyển sang /api/converse
+      eventUrl: 'https://my-call-app.vercel.app/api/converse',
       format: 'mp3',
       enable: true,
-      stopOnEnd: false, // Tiếp tục ghi âm cho đến khi cuộc gọi kết thúc
-    },
-    {
-      action: 'input',
-      eventUrl: 'https://my-call-app.vercel.app/api/converse',
-      mode: 'voice',
-      timeout: 10,
+      stopAfterSilence: 2, // Dừng ghi âm sau 2 giây im lặng
     },
   ];
 

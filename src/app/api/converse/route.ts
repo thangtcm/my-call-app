@@ -23,13 +23,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
   await sendToDiscord('Request body received:', body);
 
-  const recordingUrl = body.recordingUrl; // Lấy từ action record
-  const from = body.from;
+  const recordingUrl = body.recordingUrl;
+  const from = body.from || 'Unknown'; // Mặc định nếu thiếu
   const callId = body.call_id;
-  const timeout = body.timeout;
 
-  if (!from || !callId) {
-    await sendToDiscord('Missing required fields:', { recordingUrl, from, callId });
+  if (!callId) {
+    await sendToDiscord('Missing callId:', body);
     return NextResponse.json([
       {
         action: 'talk',
@@ -41,16 +40,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     let customerText = 'Tôi không nghe rõ';
-    if (timeout) {
-      await sendToDiscord('Timeout occurred:', { callId });
-      customerText = 'Bạn chưa nói gì. Vui lòng nói lại yêu cầu của bạn.';
-    } else if (recordingUrl) {
+    if (recordingUrl) {
       await sendToDiscord('Transcribing recording:', { recordingUrl });
       const transcript = await assemblyAIClient.transcripts.transcribe({ audio: recordingUrl });
       customerText = transcript.text || 'Tôi không nghe rõ';
       await sendToDiscord('Customer said:', { text: customerText });
     } else {
       await sendToDiscord('No recordingUrl provided:', { callId });
+      customerText = 'Bạn chưa nói gì. Vui lòng nói lại yêu cầu của bạn.';
     }
 
     let aiResponse = '';
@@ -69,10 +66,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         bargeIn: true,
       },
       {
-        action: 'input',
+        action: 'record',
         eventUrl: 'https://my-call-app.vercel.app/api/converse',
-        mode: 'voice',
-        timeout: 10,
+        format: 'mp3',
+        enable: true,
+        stopAfterSilence: 2,
       },
     ];
 
