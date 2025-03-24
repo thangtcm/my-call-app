@@ -40,7 +40,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       eventUrl: "https://my-call-app.vercel.app/api/converse",
       type: ["speech"],
       speech: {
-        endOnSilence: 1.5,
+        uuid: "auto",
+        endOnSilence: 2,
         language: "vi-VN",
       },
     },
