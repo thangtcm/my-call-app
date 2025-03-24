@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const from = searchParams.get('from'); // Số khách hàng
-  const to = searchParams.get('to');     // Số tổng đài
-  const uuid = searchParams.get('uuid'); // ID cuộc gọi
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
+  const uuid = searchParams.get('uuid');
 
   if (!from || !to || !uuid) {
     return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -13,17 +13,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const scco = [
     {
       action: 'talk',
-      text: `Xin chào ${from}, cảm ơn bạn đã gọi tới tổng đài. Nhấn 1 để kiểm tra đơn hàng, nhấn 2 để gặp nhân viên, sau đó nhấn phím thăng để xác nhận.`,
+      text: `Xin chào ${from}, tôi là trợ lý AI của tổng đài. Bạn cần hỗ trợ gì hôm nay?`,
       voice: 'hn_female_thutrang_phrase_48k-hsmm',
       bargeIn: true,
-      speed: 1.0,
+    },
+    {
+      action: 'record',
+      eventUrl: 'https://my-call-app.vercel.app/api/recording',
+      format: 'mp3',
+      enable: true,
     },
     {
       action: 'input',
-      eventUrl: 'https://my-call-app.vercel.app/api/input', // Endpoint xử lý DTMF
-      submitOnHash: true, // Gửi khi khách hàng nhấn '#'
-      timeout: 15, // Đợi tối đa 15 giây
-      maxLength: 2, // Giới hạn tối đa 2 ký tự
+      eventUrl: 'https://my-call-app.vercel.app/api/converse',
+      mode: 'voice',
+      timeout: 10,
     },
   ];
 

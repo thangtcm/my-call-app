@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "assemblyai": "^4.9.0",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.54.0",
