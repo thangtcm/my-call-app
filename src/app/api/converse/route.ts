@@ -7,7 +7,6 @@ const assemblyAIClient = new AssemblyAI({
 
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0';
 
-// Hàm gửi log tới Discord
 async function sendToDiscord(message: string, data: any = {}) {
   try {
     await fetch(DISCORD_WEBHOOK_URL, {
@@ -17,21 +16,20 @@ async function sendToDiscord(message: string, data: any = {}) {
         content: `${message}\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
       }),
     });
-  } catch (error) {
-    // Không làm gì nếu gửi Discord thất bại để không ảnh hưởng luồng chính
-  }
+  } catch (error) {}
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
   await sendToDiscord('Request body received:', body);
 
-  const audioUrl = body.audioUrl;
+  const recordingUrl = body.recordingUrl; // Lấy từ action record
   const from = body.from;
   const callId = body.call_id;
+  const timeout = body.timeout;
 
-  if (!audioUrl || !from || !callId) {
-    await sendToDiscord('Missing required fields:', { audioUrl, from, callId });
+  if (!from || !callId) {
+    await sendToDiscord('Missing required fields:', { recordingUrl, from, callId });
     return NextResponse.json([
       {
         action: 'talk',
@@ -42,10 +40,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    await sendToDiscord('Transcribing audio:', { audioUrl });
-    const transcript = await assemblyAIClient.transcripts.transcribe({ audio: audioUrl });
-    const customerText = transcript.text || 'Tôi không nghe rõ';
-    await sendToDiscord('Customer said:', { text: customerText });
+    let customerText = 'Tôi không nghe rõ';
+    if (timeout) {
+      await sendToDiscord('Timeout occurred:', { callId });
+      customerText = 'Bạn chưa nói gì. Vui lòng nói lại yêu cầu của bạn.';
+    } else if (recordingUrl) {
+      await sendToDiscord('Transcribing recording:', { recordingUrl });
+      const transcript = await assemblyAIClient.transcripts.transcribe({ audio: recordingUrl });
+      customerText = transcript.text || 'Tôi không nghe rõ';
+      await sendToDiscord('Customer said:', { text: customerText });
+    } else {
+      await sendToDiscord('No recordingUrl provided:', { callId });
+    }
 
     let aiResponse = '';
     if (customerText.toLowerCase().includes('đơn hàng')) {
@@ -75,7 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await sendToDiscord('Error details:', {
       message: error.message,
       stack: error.stack,
-      audioUrl,
+      recordingUrl,
     });
     return NextResponse.json([
       {
