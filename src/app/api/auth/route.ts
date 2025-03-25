@@ -7,12 +7,6 @@ interface AuthRequestBody {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body: AuthRequestBody = await request.json();
-  const { userId } = body;
-
-  if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-  }
-
   const apiKey = process.env.STRINGEE_API_KEY as string;
   const secretKey = process.env.STRINGEE_SECRET_KEY as string;
   if (!apiKey || !secretKey) {
@@ -21,14 +15,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 500 }
     );
   }
+  var now = Math.floor(Date.now() / 1000);
+  var header = { alg: "HS256", cty: "stringee-api;v=1" };
   const payload = {
-    jti: apiKey + '-' + Date.now(),
+    jti: apiKey + '-' + now,
     iss: apiKey,
-    userId,
-    exp: Math.floor(Date.now() / 1000) + 3600,
+    exp: now + 3600,
+    rest_api: true
   };
 
-  const token = jwt.sign(payload, secretKey, { algorithm: 'HS256' });
+  const token = jwt.sign(payload, secretKey, { algorithm: 'HS256', header: header });
 
   return NextResponse.json({ token }, { status: 200 });
 }

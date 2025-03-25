@@ -23,12 +23,11 @@ async function sendToDiscord(message: string, data: any = {}) {
 }
 
 // Lấy JWT từ /api/auth
-async function getStringeeJWT(userId: string): Promise<string> {
+async function getStringeeJWT(): Promise<string> {
   try {
     const response = await fetch(`${API_DOMAIN}/api/auth`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
     });
 
     if (!response.ok) {
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // const userId = body.fromNumber; 
-    const jwt = 'eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSy4wLjV4U2M3aFkwdWI2QjNvclNZMnhQeVh3RnFNd0xsUmV2LTE3NDI4NjQ3NjUiLCJpc3MiOiJTSy4wLjV4U2M3aFkwdWI2QjNvclNZMnhQeVh3RnFNd0xsUmV2IiwiZXhwIjoxNzQ1NDU2NzY1LCJyZXN0X2FwaSI6dHJ1ZX0.dZ7wgwddN3jtYJKfn9saibmo2La2pvCXH-32fTFg35Y';
+    const jwt = await getStringeeJWT();
     // await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
 
     // Tải file từ Stringee
