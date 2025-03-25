@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0";
-const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY;
 const API_DOMAIN = "https://my-call-app.vercel.app";
 
 async function sendToDiscord(message: string, data: any = {}) {
@@ -41,10 +40,10 @@ export async function GET(request: NextRequest) {
       action: "recordMessage",
       eventUrl: `${API_DOMAIN}/api/ai-process`,
       beepStart: true,
-      timeout: 60000,
+      timeout: 60000, // 60 giây
       format: "wav",
       silenceThresh: 12,
-      silenceTimeout: 4000,
+      silenceTimeout: 4000, // 4 giây
     },
   ];
 
