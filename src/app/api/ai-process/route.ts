@@ -71,11 +71,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Không nhận được file ghi âm" }, { status: 400 });
   }
 
+  await sendToDiscord("🔊 Body response ai-process nhận được", { body });
   await sendToDiscord("🔊 File ghi âm nhận được", { audioUrl });
 
   try {
     // Lấy JWT từ /api/auth (dùng userId mặc định hoặc từ body nếu có)
-    const userId = body.userId || "default-user"; // Thay "default-user" bằng logic thực tế
+    const userId = body.from; // Thay "default-user" bằng logic thực tế
     const jwt = await getStringeeJWT(userId);
     await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
 
