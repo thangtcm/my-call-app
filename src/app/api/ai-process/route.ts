@@ -4,6 +4,7 @@ import { AssemblyAI } from "assemblyai";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0";
 const API_DOMAIN = "https://my-call-app.vercel.app"; // Thay bằng domain thực tế của bạn
+const STRINGEE_PUT_ACTIONS_URL = "https://api.stringee.com/v1/call2/putactions";
 const assemblyAIClient = new AssemblyAI({
   apiKey: process.env.ASSEMBLYAI_API_KEY as string,
 });
@@ -25,7 +26,7 @@ async function sendToDiscord(message: string, data: any = {}) {
 // Lấy JWT từ /api/auth
 async function getStringeeJWT(): Promise<string> {
   try {
-    const response = await fetch(`/api/auth`, {
+    const response = await fetch(`${API_DOMAIN}/api/auth`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
@@ -62,10 +63,36 @@ async function fetchStringeeAudio(audioUrl: string, jwt: string): Promise<Buffer
   }
 }
 
+async function putActionsToStringee(callId: string, jwt: string, actions: any[]) {
+    try {
+      const requestBody = { callId, actions };
+      await sendToDiscord("📤 Gửi Put actions tới Stringee", { requestBody });
+      const response = await fetch(STRINGEE_PUT_ACTIONS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-STRINGEE-AUTH": jwt,
+        },
+        body: JSON.stringify(requestBody),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Lỗi khi gửi Put actions: ${response.status} - ${errorText}`);
+      }
+  
+      const result = await response.json();
+      await sendToDiscord("✅ Kết quả Put actions", { result });
+      return result;
+    } catch (error) {
+      throw new Error(`Không thể gửi Put actions tới Stringee: ${String(error)}`);
+    }
+  }
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const audioUrl = body.audioUrl || body.recording_url;
-
+  const callId = body.call_id;
   if (!audioUrl) {
     return NextResponse.json({ error: "Không nhận được file ghi âm" }, { status: 400 });
   }
@@ -74,18 +101,13 @@ export async function POST(request: NextRequest) {
   await sendToDiscord("🔊 File ghi âm nhận được", { audioUrl });
 
   try {
-    // const userId = body.fromNumber; 
     const jwt = await getStringeeJWT();
-    // await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
-
-    // Tải file từ Stringee
     const audioBuffer = await fetchStringeeAudio(audioUrl, jwt);
     await sendToDiscord("📥 Đã tải file âm thanh từ Stringee");
 
     const audioPublicUrl = await assemblyAIClient.files.upload(audioBuffer);
     await sendToDiscord("📄 Audio trích xuất", { audioPublicUrl });
 
-    // Chuyển đổi âm thanh thành văn bản
     const transcript = await assemblyAIClient.transcripts.transcribe({
       audio: audioPublicUrl,
     });
@@ -112,7 +134,7 @@ export async function POST(request: NextRequest) {
         voice: "hn_female_thutrang_phrase_48k-hsmm",
       },
     ];
-
+    await putActionsToStringee(callId, jwt, responseActions);
     return NextResponse.json(responseActions);
   } catch (error) {
     console.error("Lỗi xử lý AI:", error);
