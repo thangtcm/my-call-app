@@ -75,8 +75,7 @@ export async function POST(request: NextRequest) {
   await sendToDiscord("🔊 File ghi âm nhận được", { audioUrl });
 
   try {
-    // Lấy JWT từ /api/auth (dùng userId mặc định hoặc từ body nếu có)
-    const userId = body.from; // Thay "default-user" bằng logic thực tế
+    const userId = body.fromNumber; 
     const jwt = await getStringeeJWT(userId);
     await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
 
