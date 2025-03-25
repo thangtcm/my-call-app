@@ -33,9 +33,6 @@ export async function POST(request: NextRequest) {
   try {
     // Chuyển đổi âm thanh thành văn bản
     const transcript = await assemblyAIClient.transcripts.transcribe({ audio: audioUrl });
-    if (transcript.status !== "completed") {
-      throw new Error("Lỗi trích xuất văn bản");
-    }
     const text = transcript.text || "Không nhận diện được nội dung";
     await sendToDiscord("📄 Văn bản trích xuất", { text });
 
