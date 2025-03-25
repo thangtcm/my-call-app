@@ -25,7 +25,7 @@ async function sendToDiscord(message: string, data: any = {}) {
 // Lấy JWT từ /api/auth
 async function getStringeeJWT(): Promise<string> {
   try {
-    const response = await fetch(`${API_DOMAIN}/api/auth`, {
+    const response = await fetch(`/api/auth`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
