@@ -75,9 +75,9 @@ export async function POST(request: NextRequest) {
   await sendToDiscord("🔊 File ghi âm nhận được", { audioUrl });
 
   try {
-    const userId = body.fromNumber; 
-    const jwt = await getStringeeJWT(userId);
-    await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
+    // const userId = body.fromNumber; 
+    const jwt = 'eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSy4wLjV4U2M3aFkwdWI2QjNvclNZMnhQeVh3RnFNd0xsUmV2LTE3NDI4NjQ3NjUiLCJpc3MiOiJTSy4wLjV4U2M3aFkwdWI2QjNvclNZMnhQeVh3RnFNd0xsUmV2IiwiZXhwIjoxNzQ1NDU2NzY1LCJyZXN0X2FwaSI6dHJ1ZX0.dZ7wgwddN3jtYJKfn9saibmo2La2pvCXH-32fTFg35Y';
+    // await sendToDiscord("🔑 Đã lấy JWT từ /api/auth", { userId });
 
     // Tải file từ Stringee
     const audioBuffer = await fetchStringeeAudio(audioUrl, jwt);
