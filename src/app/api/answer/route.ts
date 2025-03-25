@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1353863038213816430/LR0owTe6yD7gx0j6fiVVUf9vOWhuvN3InNAyC93RGZyt78uVdbgOEsSuWgu10l91GOb0";
+const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY;
+const API_DOMAIN = "https://my-call-app.vercel.app";
 
 async function sendToDiscord(message: string, data: any = {}) {
   try {
@@ -16,7 +18,7 @@ async function sendToDiscord(message: string, data: any = {}) {
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
@@ -31,19 +33,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const scco = [
     {
       action: "talk",
-      text: `Xin chào, tôi là trợ lý AI. Bạn cần hỗ trợ gì hôm nay?`,
+      text: "Xin chào, tôi là trợ lý AI. Hãy đặt câu hỏi sau tiếng bíp.",
       voice: "hn_female_thutrang_phrase_48k-hsmm",
       bargeIn: true,
     },
     {
-      action: "input",
-      eventUrl: "https://my-call-app.vercel.app/api/converse",
-      type: ["speech"],
-      speech: {
-        uuid: "auto",
-        endOnSilence: 2,
-        language: "vi-VN",
-      },
+      action: "recordMessage",
+      eventUrl: `${API_DOMAIN}/api/ai-process`,
+      beepStart: true,
+      timeout: 60000,
+      format: "wav",
+      silenceThresh: 12,
+      silenceTimeout: 4000,
     },
   ];
 
