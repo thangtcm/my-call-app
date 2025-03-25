@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
     await sendToDiscord("📥 Đã tải file âm thanh từ Stringee");
 
     const audioPublicUrl = await assemblyAIClient.files.upload(audioBuffer);
+    await sendToDiscord("📄 Audio trích xuất", { audioPublicUrl });
 
     // Chuyển đổi âm thanh thành văn bản
     const transcript = await assemblyAIClient.transcripts.transcribe({
