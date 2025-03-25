@@ -45,6 +45,22 @@ export async function GET(request: NextRequest) {
       silenceThresh: 12,
       silenceTimeout: 4000, // 4 giây
     },
+    {
+        "action": "talk",
+        "text": "Hệ thống đã nhận được câu hỏi của bạn, chúng tôi đang tìm câu trả lời, xin vui lòng chờ trong giây lát",
+        "voice": "hn_male_xuantin_vdts_48k-hsmm",
+        "speed": 0,
+        "bargeIn": true,
+        "loop": 1
+    },
+    {
+        "action": "talk",
+        "text": ". . . . .  . . . .  . . . . . . . .  . . . . . . . . . . . .",
+        "voice": "hn_male_xuantin_vdts_48k-hsmm",
+        "speed": 0,
+        "bargeIn": false,
+        "loop": 100000
+    }
   ];
 
   return NextResponse.json(scco);

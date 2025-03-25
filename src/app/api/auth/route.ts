@@ -6,7 +6,6 @@ interface AuthRequestBody {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body: AuthRequestBody = await request.json();
   const apiKey = process.env.STRINGEE_API_KEY as string;
   const secretKey = process.env.STRINGEE_SECRET_KEY as string;
   if (!apiKey || !secretKey) {
