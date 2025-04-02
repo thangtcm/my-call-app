@@ -14,7 +14,7 @@
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.54.0",
     "jsonwebtoken": "^9.0.2",
-    "next": "15.2.3",
+    "next": "15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "ws": "^8.18.1"
