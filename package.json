@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "assemblyai": "^4.9.0",
-    "axios": "^1.8.4",
+    "axios": "^1.13.5",
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.54.0",
     "jsonwebtoken": "^9.0.2",
